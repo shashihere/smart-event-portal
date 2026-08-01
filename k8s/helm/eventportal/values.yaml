@@ -1,0 +1,18 @@
+mongodb:
+  image: mongo:latest
+  port: 27017
+
+backend:
+  image: username/eventportal-backend
+  tag: v1
+  port: 5000
+  replicas: 2
+
+frontend:
+  image: username/eventportal-frontend
+  tag: v1
+  port: 80
+  replicas: 2
+
+secret:
+  mongoUri: "mongodb://mongodb-service:27017/smart_events"

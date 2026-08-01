@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: {{ .Values.mongodb.image }}
+        ports:
+        - containerPort: {{ .Values.mongodb.port }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventportal-backend
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: eventportal-backend
+  template:
+    metadata:
+      labels:
+        app: eventportal-backend
+    spec:
+      containers:
+      - name: backend
+        image: "{{ .Values.backend.image }}:{{ .Values.backend.tag }}"
+        ports:
+        - containerPort: {{ .Values.backend.port }}
+        envFrom:
+        - secretRef:
+            name: eventportal-secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventportal-frontend
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      app: eventportal-frontend
+  template:
+    metadata:
+      labels:
+        app: eventportal-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: "{{ .Values.frontend.image }}:{{ .Values.frontend.tag }}"
+        ports:
+        - containerPort: {{ .Values.frontend.port }}
