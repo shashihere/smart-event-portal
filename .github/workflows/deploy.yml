@@ -1,0 +1,65 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Start Minikube (Kubernetes)
+      uses: medyagh/setup-minikube@latest
+
+    - name: Build Backend Image
+      run: |
+        eval $(minikube docker-env)
+        docker build -t shashihere/eventportal-backend:v1 ./backend
+
+    - name: Build Frontend Image
+      run: |
+        eval $(minikube docker-env)
+        docker build -t shashihere/eventportal-frontend:v1 ./frontend
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/secret.yaml
+        kubectl apply -f k8s/deployment.yaml
+        kubectl apply -f k8s/service.yaml
+
+    - name: Wait for Pods to be Ready
+      run: |
+        sleep 15
+        kubectl wait --for=condition=ready pod -l app=eventportal-backend --timeout=120s
+        kubectl wait --for=condition=ready pod -l app=eventportal-frontend --timeout=120s
+        kubectl wait --for=condition=ready pod -l app=mongodb --timeout=120s
+
+    - name: DISPLAY RESULTS FOR SCREENSHOTS (Phase 5)
+      run: |
+        echo "=========================================="
+        echo "          PHASE 5: DEMONSTRATION          "
+        echo "=========================================="
+        echo ""
+        echo "1. DOCKER CONTAINERS RUNNING:"
+        eval $(minikube docker-env)
+        docker ps
+        echo ""
+        echo "2. KUBERNETES PODS RUNNING:"
+        kubectl get pods
+        echo ""
+        echo "3. KUBERNETES SERVICES:"
+        kubectl get svc
+        echo ""
+        echo "4. DOCKER IMAGES BUILT:"
+        docker images | grep eventportal
+        echo "=========================================="
