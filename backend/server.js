@@ -26,7 +26,9 @@ const EventSchema = new mongoose.Schema({
   date: String,
   description: String,
   location: String,
-  price: Number
+  price: Number,
+  capacity: { type: Number, default: 50 },
+  booked: { type: Number, default: 0 }
 });
 
 const BookingSchema = new mongoose.Schema({
@@ -90,9 +92,36 @@ app.post('/api/events', async (req, res) => {
 
 app.post('/api/bookings', async (req, res) => {
   try {
+    const { userId, eventId, tickets } = req.body;
+    const event = await Event.findById(eventId);
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+    if (event.capacity - event.booked < tickets) {
+      return res.status(400).json({ error: 'Not enough tickets available!' });
+    }
+    
+    // Update event bookings
+    event.booked += tickets;
+    await event.save();
+
     const newBooking = new Booking(req.body);
     await newBooking.save();
     res.json(newBooking);
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/bookings/:userId', async (req, res) => {
+  try {
+    const bookings = await Booking.find({ userId: req.params.userId });
+    
+    // Populate event details manually since we don't have Refs set up
+    const populatedBookings = await Promise.all(bookings.map(async (b) => {
+      const event = await Event.findById(b.eventId);
+      return { ...b.toObject(), event };
+    }));
+    
+    res.json(populatedBookings);
   } catch(err) {
     res.status(500).json({ error: err.message });
   }
