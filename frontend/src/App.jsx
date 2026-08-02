@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Calendar, Ticket, User, Shield } from 'lucide-react';
+import { Calendar, Ticket, User, Shield, MapPin, Search } from 'lucide-react';
 import './index.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -11,9 +11,9 @@ function Navbar() {
     <nav className="navbar">
       <Link to="/" className="brand">SmartEvents</Link>
       <div className="nav-links">
-        <Link to="/events"><Calendar size={18} style={{display:'inline', marginBottom:'-4px'}}/> Events</Link>
-        <Link to="/dashboard"><User size={18} style={{display:'inline', marginBottom:'-4px'}}/> Dashboard</Link>
-        <Link to="/admin"><Shield size={18} style={{display:'inline', marginBottom:'-4px'}}/> Admin</Link>
+        <Link to="/events"><Calendar size={18} /> Events</Link>
+        <Link to="/dashboard"><User size={18} /> Dashboard</Link>
+        <Link to="/admin"><Shield size={18} /> Admin</Link>
       </div>
     </nav>
   );
@@ -22,8 +22,8 @@ function Navbar() {
 function Home() {
   return (
     <div className="hero">
-      <h1>Experience the Extraordinary</h1>
-      <p>Discover and book tickets to the most exclusive events around the globe. Your next adventure starts here.</p>
+      <h1>Experience the <br/>Extraordinary</h1>
+      <p>Discover and book tickets to the most exclusive tech summits, cyber-concerts, and VIP events around the globe. Your next adventure starts here.</p>
       <Link to="/events"><button className="btn">Browse Events</button></Link>
     </div>
   );
@@ -49,28 +49,44 @@ function Events() {
 
   return (
     <div>
-      <h2>Upcoming Events</h2>
-      <div className="form-group">
+      <div className="search-container">
         <input 
           type="text" 
-          placeholder="Search events... (e.g. Concert)" 
+          placeholder="Search for premium events..." 
           value={search} 
           onChange={(e) => setSearch(e.target.value)}
         />
+        <Search size={20} style={{position: 'absolute', left: '1rem', top: '1.25rem', color: '#94a3b8'}} />
       </div>
+      
+      <h2>Upcoming Events</h2>
+      
       <div className="events-grid">
         {filtered.map(e => (
-          <div key={e._id} className="card">
+          <div key={e._id} className="card event-card">
             <h3>{e.title}</h3>
-            <p style={{color: '#94a3b8'}}>{e.date} • {e.location}</p>
-            <p>{e.description}</p>
+            <div className="date">
+              <Calendar size={16} /> {e.date}
+            </div>
+            <div className="location">
+              <MapPin size={16} /> {e.location}
+            </div>
+            <p style={{marginTop: '1rem', lineHeight: '1.5', color: '#cbd5e1'}}>{e.description}</p>
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem'}}>
-              <span style={{fontWeight: 'bold', fontSize: '1.2rem'}}>${e.price}</span>
-              <button className="btn" onClick={() => handleBook(e._id)}>Book Now</button>
+              <span className="price">${e.price}</span>
+              <button className="btn" onClick={() => handleBook(e._id)}>
+                <Ticket size={16} style={{display:'inline', marginBottom:'-2px', marginRight: '6px'}}/> 
+                Book Now
+              </button>
             </div>
           </div>
         ))}
-        {filtered.length === 0 && <p>No events found.</p>}
+        {filtered.length === 0 && (
+          <div className="card" style={{gridColumn: '1 / -1', textAlign: 'center'}}>
+            <h3 style={{marginBottom: 0}}>No events found</h3>
+            <p style={{color: '#94a3b8', marginTop: '0.5rem'}}>Check back later or adjust your search.</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -82,7 +98,7 @@ function Dashboard() {
       <h2>My Dashboard</h2>
       <div className="card">
         <h3>Booking History</h3>
-        <p>No bookings found yet.</p>
+        <p style={{color: '#94a3b8'}}>No bookings found yet.</p>
       </div>
     </div>
   );
@@ -93,14 +109,14 @@ function Admin() {
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [price, setPrice] = useState(0);
+  const [price, setPrice] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     axios.post(`${API_URL}/events`, { title, date, description, location, price })
       .then(() => {
-        alert('Event added!');
-        setTitle(''); setDate(''); setDescription(''); setLocation(''); setPrice(0);
+        alert('Event added successfully!');
+        setTitle(''); setDate(''); setDescription(''); setLocation(''); setPrice('');
       })
       .catch(err => alert('Failed to add event.'));
   };
@@ -109,29 +125,31 @@ function Admin() {
     <div>
       <h2>Admin Panel</h2>
       <div className="card" style={{maxWidth: '600px', margin: '0 auto'}}>
-        <h3>Create New Event</h3>
+        <h3 style={{marginBottom: '1.5rem'}}>Create New Event</h3>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Event Title</label>
-            <input required value={title} onChange={e=>setTitle(e.target.value)} />
+            <input required placeholder="e.g., Cyber Security Summit" value={title} onChange={e=>setTitle(e.target.value)} />
           </div>
-          <div className="form-group">
-            <label>Date</label>
-            <input required type="date" value={date} onChange={e=>setDate(e.target.value)} />
+          <div className="form-group" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+            <div>
+              <label>Date</label>
+              <input required type="date" value={date} onChange={e=>setDate(e.target.value)} />
+            </div>
+            <div>
+              <label>Price ($)</label>
+              <input required type="number" placeholder="0" value={price} onChange={e=>setPrice(e.target.value)} />
+            </div>
           </div>
           <div className="form-group">
             <label>Location</label>
-            <input required value={location} onChange={e=>setLocation(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label>Price ($)</label>
-            <input required type="number" value={price} onChange={e=>setPrice(e.target.value)} />
+            <input required placeholder="e.g., Neo Tokyo / Online" value={location} onChange={e=>setLocation(e.target.value)} />
           </div>
           <div className="form-group">
             <label>Description</label>
-            <textarea required value={description} onChange={e=>setDescription(e.target.value)} rows={4} />
+            <textarea required placeholder="Detailed description of the event..." value={description} onChange={e=>setDescription(e.target.value)} rows={4} />
           </div>
-          <button type="submit" className="btn" style={{width: '100%'}}>Add Event</button>
+          <button type="submit" className="btn" style={{width: '100%', marginTop: '1rem'}}>+ Publish Event</button>
         </form>
       </div>
     </div>

@@ -1,0 +1,4 @@
+Smart Event Management Portal - DevOps Capstone Submission Links
+
+GitHub Repository: [Paste your GitHub link here]
+Docker Hub Repository: [Paste your Docker Hub link here]
