@@ -15,6 +15,12 @@ mongoose.connect(mongoURI)
 .catch(err => console.log('MongoDB connection error:', err));
 
 // Schemas
+const UserSchema = new mongoose.Schema({
+  name: String,
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true }
+});
+
 const EventSchema = new mongoose.Schema({
   title: String,
   date: String,
@@ -29,10 +35,40 @@ const BookingSchema = new mongoose.Schema({
   tickets: Number
 });
 
+const User = mongoose.model('User', UserSchema);
 const Event = mongoose.model('Event', EventSchema);
 const Booking = mongoose.model('Booking', BookingSchema);
 
 // Routes
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const existingUser = await User.findOne({ email: req.body.email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already in use. Please login.' });
+    }
+    const newUser = new User(req.body);
+    await newUser.save();
+    res.json({ message: 'User created successfully' });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      return res.status(404).json({ error: 'Account not found. Please sign up first.' });
+    }
+    if (user.password !== req.body.password) {
+      return res.status(401).json({ error: 'Incorrect password.' });
+    }
+    res.json({ message: 'Login successful', userId: user._id });
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/events', async (req, res) => {
   try {
     const events = await Event.find();

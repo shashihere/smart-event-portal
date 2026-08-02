@@ -36,13 +36,32 @@ function Home() {
 
 function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simulate authentication
-    alert(isLogin ? 'Successfully logged in!' : 'Account created successfully!');
-    navigate('/dashboard');
+    if (isLogin) {
+      axios.post(`${API_URL}/auth/login`, { email, password })
+        .then(res => {
+          alert(res.data.message);
+          navigate('/dashboard');
+        })
+        .catch(err => {
+          alert(err.response?.data?.error || 'Login failed');
+        });
+    } else {
+      axios.post(`${API_URL}/auth/signup`, { name, email, password })
+        .then(res => {
+          alert(res.data.message);
+          setIsLogin(true); // Switch to login view
+        })
+        .catch(err => {
+          alert(err.response?.data?.error || 'Signup failed');
+        });
+    }
   };
 
   return (
@@ -54,18 +73,18 @@ function Auth() {
           {!isLogin && (
             <div className="form-group">
               <label>Full Name</label>
-              <input required type="text" placeholder="John Doe" />
+              <input required type="text" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} />
             </div>
           )}
           
           <div className="form-group">
             <label>Email Address</label>
-            <input required type="email" placeholder="you@example.com" />
+            <input required type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
           </div>
           
           <div className="form-group">
             <label>Password</label>
-            <input required type="password" placeholder="••••••••" />
+            <input required type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
           </div>
           
           <button type="submit" className="btn" style={{width: '100%', marginTop: '1rem', padding: '1rem'}}>
