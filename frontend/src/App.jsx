@@ -1,7 +1,7 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Calendar, Ticket, User, Shield, MapPin, Search } from 'lucide-react';
+import { Calendar, Ticket, User, Shield, MapPin, Search, LogIn } from 'lucide-react';
 import './index.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -14,6 +14,11 @@ function Navbar() {
         <Link to="/events"><Calendar size={18} /> Events</Link>
         <Link to="/dashboard"><User size={18} /> Dashboard</Link>
         <Link to="/admin"><Shield size={18} /> Admin</Link>
+        <Link to="/auth" style={{marginLeft: '1rem'}}>
+          <button className="btn" style={{padding: '0.5rem 1rem', fontSize: '0.9rem'}}>
+            <LogIn size={16} style={{display:'inline', marginBottom:'-2px', marginRight:'4px'}}/> Login
+          </button>
+        </Link>
       </div>
     </nav>
   );
@@ -25,6 +30,59 @@ function Home() {
       <h1>Experience the <br/>Extraordinary</h1>
       <p>Discover and book tickets to the most exclusive tech summits, cyber-concerts, and VIP events around the globe. Your next adventure starts here.</p>
       <Link to="/events"><button className="btn">Browse Events</button></Link>
+    </div>
+  );
+}
+
+function Auth() {
+  const [isLogin, setIsLogin] = useState(true);
+  const navigate = useNavigate();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Simulate authentication
+    alert(isLogin ? 'Successfully logged in!' : 'Account created successfully!');
+    navigate('/dashboard');
+  };
+
+  return (
+    <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh'}}>
+      <div className="card" style={{width: '100%', maxWidth: '400px', textAlign: 'center'}}>
+        <h2 style={{marginBottom: '2rem'}}>{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
+        
+        <form onSubmit={handleSubmit} style={{textAlign: 'left'}}>
+          {!isLogin && (
+            <div className="form-group">
+              <label>Full Name</label>
+              <input required type="text" placeholder="John Doe" />
+            </div>
+          )}
+          
+          <div className="form-group">
+            <label>Email Address</label>
+            <input required type="email" placeholder="you@example.com" />
+          </div>
+          
+          <div className="form-group">
+            <label>Password</label>
+            <input required type="password" placeholder="••••••••" />
+          </div>
+          
+          <button type="submit" className="btn" style={{width: '100%', marginTop: '1rem', padding: '1rem'}}>
+            {isLogin ? 'Login to Dashboard' : 'Sign Up'}
+          </button>
+        </form>
+
+        <p style={{marginTop: '1.5rem', color: '#94a3b8', fontSize: '0.9rem'}}>
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          <span 
+            onClick={() => setIsLogin(!isLogin)} 
+            style={{color: 'var(--primary-color)', cursor: 'pointer', fontWeight: 'bold'}}
+          >
+            {isLogin ? 'Sign up here' : 'Login here'}
+          </span>
+        </p>
+      </div>
     </div>
   );
 }
@@ -166,6 +224,7 @@ function App() {
           <Route path="/events" element={<Events />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/auth" element={<Auth />} />
         </Routes>
       </div>
     </Router>
