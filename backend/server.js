@@ -18,7 +18,8 @@ mongoose.connect(mongoURI)
 const UserSchema = new mongoose.Schema({
   name: String,
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
+  password: { type: String, required: true },
+  role: { type: String, default: 'user' }
 });
 
 const EventSchema = new mongoose.Schema({
@@ -48,9 +49,13 @@ app.post('/api/auth/signup', async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ error: 'Email already in use. Please login.' });
     }
-    const newUser = new User(req.body);
+    
+    // Assign role based on email domain
+    const role = req.body.email.endsWith('@admin.smartevents.com') ? 'admin' : 'user';
+    
+    const newUser = new User({ ...req.body, role });
     await newUser.save();
-    res.json({ message: 'User created successfully' });
+    res.json({ message: 'User created successfully', role: newUser.role });
   } catch(err) {
     res.status(500).json({ error: err.message });
   }
@@ -65,7 +70,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (user.password !== req.body.password) {
       return res.status(401).json({ error: 'Incorrect password.' });
     }
-    res.json({ message: 'Login successful', userId: user._id });
+    res.json({ message: 'Login successful', userId: user._id, role: user.role });
   } catch(err) {
     res.status(500).json({ error: err.message });
   }
@@ -82,7 +87,18 @@ app.get('/api/events', async (req, res) => {
 
 app.post('/api/events', async (req, res) => {
   try {
-    const newEvent = new Event(req.body);
+    const { adminId, ...eventData } = req.body;
+    
+    if (!adminId) {
+      return res.status(403).json({ error: 'Access Denied: No Admin ID provided.' });
+    }
+
+    const adminUser = await User.findById(adminId);
+    if (!adminUser || adminUser.role !== 'admin') {
+      return res.status(403).json({ error: 'Access Denied: Admin privileges required.' });
+    }
+
+    const newEvent = new Event(eventData);
     await newEvent.save();
     res.json(newEvent);
   } catch(err) {

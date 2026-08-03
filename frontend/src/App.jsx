@@ -9,10 +9,12 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 // --- Shared Components ---
 function Navbar() {
   const currentUserId = localStorage.getItem('userId');
+  const userRole = localStorage.getItem('userRole');
   const navigate = useNavigate();
 
   const handleLogout = () => {
     localStorage.removeItem('userId');
+    localStorage.removeItem('userRole');
     navigate('/');
   };
 
@@ -22,7 +24,9 @@ function Navbar() {
       <div className="nav-links">
         <Link to="/events"><Calendar size={18} /> Events</Link>
         <Link to="/dashboard"><User size={18} /> Dashboard</Link>
-        <Link to="/admin"><Shield size={18} /> Admin</Link>
+        {userRole === 'admin' && (
+          <Link to="/admin"><Shield size={18} /> Admin</Link>
+        )}
         {currentUserId ? (
           <button className="btn" onClick={handleLogout} style={{marginLeft: '1rem', padding: '0.5rem 1rem', fontSize: '0.9rem'}}>
              Logout
@@ -95,7 +99,12 @@ function Auth() {
         .then(res => {
           alert(res.data.message);
           localStorage.setItem('userId', res.data.userId);
-          navigate('/events');
+          localStorage.setItem('userRole', res.data.role);
+          if (res.data.role === 'admin') {
+             navigate('/admin');
+          } else {
+             navigate('/events');
+          }
         })
         .catch(err => {
           alert(err.response?.data?.error || 'Login failed');
@@ -204,7 +213,6 @@ function Events() {
               <div className="location"><MapPin size={16} /> {e.location}</div>
               <p style={{marginTop: '1rem', lineHeight: '1.5', color: '#cbd5e1'}}>{e.description}</p>
               
-              {/* Scarcity Bar */}
               <div className="scarcity-container" style={{marginTop: '1.5rem'}}>
                 <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.5rem', color: isSellingFast ? '#ec4899' : '#94a3b8'}}>
                   <span>{isSellingFast ? <><Flame size={14} style={{display:'inline', marginBottom:'-2px'}}/> Selling Fast!</> : 'Availability'}</span>
@@ -271,7 +279,6 @@ function Dashboard() {
             <div key={i} className="card ticket-card" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center'}}>
               <h3 style={{fontSize: '1.2rem', marginBottom: '1rem'}}>{b.event?.title || 'Unknown Event'}</h3>
               
-              {/* QR Code Graphic using API */}
               <div className="qr-container" style={{background: 'white', padding: '0.5rem', borderRadius: '8px', marginBottom: '1.5rem'}}>
                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=TICKET-${b._id}`} alt="QR Code" />
               </div>
@@ -297,15 +304,29 @@ function Admin() {
   const [location, setLocation] = useState('');
   const [price, setPrice] = useState('');
   const [capacity, setCapacity] = useState(50);
+  
+  const currentUserId = localStorage.getItem('userId');
+  const userRole = localStorage.getItem('userRole');
+
+  if (userRole !== 'admin') {
+    return (
+      <div className="card" style={{textAlign:'center', padding: '4rem 2rem', border: '1px solid #f43f5e'}}>
+        <Shield size={48} color="#f43f5e" style={{marginBottom: '1rem'}} />
+        <h2>Access Denied</h2>
+        <p style={{color: '#94a3b8'}}>Admin privileges required. Your IP has been logged.</p>
+        <Link to="/auth"><button className="btn" style={{marginTop:'1rem'}}>Login as Admin</button></Link>
+      </div>
+    );
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    axios.post(`${API_URL}/events`, { title, date, description, location, price, capacity })
+    axios.post(`${API_URL}/events`, { adminId: currentUserId, title, date, description, location, price, capacity })
       .then(() => {
         alert('Event added successfully!');
         setTitle(''); setDate(''); setDescription(''); setLocation(''); setPrice(''); setCapacity(50);
       })
-      .catch(err => alert('Failed to add event.'));
+      .catch(err => alert(err.response?.data?.error || 'Failed to add event.'));
   };
 
   return (
