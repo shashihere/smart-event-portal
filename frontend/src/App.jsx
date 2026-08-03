@@ -1,7 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Calendar, Ticket, User, Shield, MapPin, Search, LogIn, Clock, Flame } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import Tilt from 'react-parallax-tilt';
+import Particles from "react-tsparticles";
+import { loadFull } from "tsparticles";
 import './index.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -15,11 +19,12 @@ function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem('userId');
     localStorage.removeItem('userRole');
+    toast.success('Logged out successfully');
     navigate('/');
   };
 
   return (
-    <nav className="navbar">
+    <nav className="navbar" style={{position: 'relative', zIndex: 10}}>
       <Link to="/" className="brand">SmartEvents</Link>
       <div className="nav-links">
         <Link to="/events"><Calendar size={18} /> Events</Link>
@@ -43,7 +48,6 @@ function Navbar() {
   );
 }
 
-// Countdown Timer Component
 function Countdown({ targetDate }) {
   const [timeLeft, setTimeLeft] = useState('');
 
@@ -77,7 +81,7 @@ function Countdown({ targetDate }) {
 
 function Home() {
   return (
-    <div className="hero">
+    <div className="hero" style={{position: 'relative', zIndex: 10}}>
       <h1>Experience the <br/>Extraordinary</h1>
       <p>Discover and book tickets to the most exclusive tech summits, cyber-concerts, and VIP events around the globe. Your next adventure starts here.</p>
       <Link to="/events"><button className="btn">Browse Events</button></Link>
@@ -97,7 +101,7 @@ function Auth() {
     if (isLogin) {
       axios.post(`${API_URL}/auth/login`, { email, password })
         .then(res => {
-          alert(res.data.message);
+          toast.success(res.data.message);
           localStorage.setItem('userId', res.data.userId);
           localStorage.setItem('userRole', res.data.role);
           if (res.data.role === 'admin') {
@@ -107,53 +111,55 @@ function Auth() {
           }
         })
         .catch(err => {
-          alert(err.response?.data?.error || 'Login failed');
+          toast.error(err.response?.data?.error || 'Login failed');
         });
     } else {
       axios.post(`${API_URL}/auth/signup`, { name, email, password })
         .then(res => {
-          alert(res.data.message);
+          toast.success(res.data.message);
           setIsLogin(true);
         })
         .catch(err => {
-          alert(err.response?.data?.error || 'Signup failed');
+          toast.error(err.response?.data?.error || 'Signup failed');
         });
     }
   };
 
   return (
-    <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh'}}>
-      <div className="card" style={{width: '100%', maxWidth: '400px', textAlign: 'center'}}>
-        <h2 style={{marginBottom: '2rem'}}>{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
-        
-        <form onSubmit={handleSubmit} style={{textAlign: 'left'}}>
-          {!isLogin && (
-            <div className="form-group">
-              <label>Full Name</label>
-              <input required type="text" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} />
-            </div>
-          )}
-          <div className="form-group">
-            <label>Email Address</label>
-            <input required type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input required type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
-          </div>
+    <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', position: 'relative', zIndex: 10}}>
+      <Tilt tiltMaxAngleX={5} tiltMaxAngleY={5} scale={1.02} transitionSpeed={2000}>
+        <div className="card" style={{width: '100%', minWidth: '400px', textAlign: 'center'}}>
+          <h2 style={{marginBottom: '2rem'}}>{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
           
-          <button type="submit" className="btn" style={{width: '100%', marginTop: '1rem', padding: '1rem'}}>
-            {isLogin ? 'Login to Dashboard' : 'Sign Up'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} style={{textAlign: 'left'}}>
+            {!isLogin && (
+              <div className="form-group">
+                <label>Full Name</label>
+                <input required type="text" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+            )}
+            <div className="form-group">
+              <label>Email Address</label>
+              <input required type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label>Password</label>
+              <input required type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
+            </div>
+            
+            <button type="submit" className="btn" style={{width: '100%', marginTop: '1rem', padding: '1rem'}}>
+              {isLogin ? 'Login to Dashboard' : 'Sign Up'}
+            </button>
+          </form>
 
-        <p style={{marginTop: '1.5rem', color: '#94a3b8', fontSize: '0.9rem'}}>
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <span onClick={() => setIsLogin(!isLogin)} style={{color: 'var(--primary-color)', cursor: 'pointer', fontWeight: 'bold'}}>
-            {isLogin ? 'Sign up here' : 'Login here'}
-          </span>
-        </p>
-      </div>
+          <p style={{marginTop: '1.5rem', color: '#94a3b8', fontSize: '0.9rem'}}>
+            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            <span onClick={() => setIsLogin(!isLogin)} style={{color: 'var(--primary-color)', cursor: 'pointer', fontWeight: 'bold'}}>
+              {isLogin ? 'Sign up here' : 'Login here'}
+            </span>
+          </p>
+        </div>
+      </Tilt>
     </div>
   );
 }
@@ -161,15 +167,23 @@ function Auth() {
 function Events() {
   const [events, setEvents] = useState([]);
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const loadEvents = () => {
     axios.get(`${API_URL}/events`)
-      .then(res => setEvents(res.data))
-      .catch(err => console.error(err));
+      .then(res => {
+        setEvents(res.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
-    loadEvents();
+    // Artificial delay to show off the skeleton loaders
+    setTimeout(loadEvents, 800);
   }, []);
 
   const filtered = events.filter(e => e.title.toLowerCase().includes(search.toLowerCase()));
@@ -177,20 +191,20 @@ function Events() {
   const handleBook = (eventId) => {
     const currentUserId = localStorage.getItem('userId');
     if (!currentUserId) {
-      alert("Please login first to book tickets!");
+      toast.error("Please login first to book tickets!");
       return;
     }
 
     axios.post(`${API_URL}/bookings`, { userId: currentUserId, eventId, tickets: 1 })
       .then(() => {
-        alert('Ticket Booked Successfully! Check your Dashboard for the QR Code.');
+        toast.success('Ticket Booked Successfully! Check your Dashboard.');
         loadEvents(); // refresh availability
       })
-      .catch(err => alert(err.response?.data?.error || 'Booking failed.'));
+      .catch(err => toast.error(err.response?.data?.error || 'Booking failed.'));
   };
 
   return (
-    <div>
+    <div style={{position: 'relative', zIndex: 10}}>
       <div className="search-container">
         <input type="text" placeholder="Search for premium events..." value={search} onChange={(e) => setSearch(e.target.value)} />
         <Search size={20} style={{position: 'absolute', left: '1rem', top: '1.25rem', color: '#94a3b8'}} />
@@ -199,45 +213,57 @@ function Events() {
       <h2>Upcoming Events</h2>
       
       <div className="events-grid">
-        {filtered.map(e => {
-          const available = (e.capacity || 50) - (e.booked || 0);
-          const percentBooked = Math.min(100, ((e.booked || 0) / (e.capacity || 50)) * 100);
-          const isSellingFast = percentBooked > 80;
+        {loading ? (
+          <>
+            <div className="skeleton-card"></div>
+            <div className="skeleton-card"></div>
+            <div className="skeleton-card"></div>
+          </>
+        ) : (
+          <>
+            {filtered.map(e => {
+              const available = (e.capacity || 50) - (e.booked || 0);
+              const percentBooked = Math.min(100, ((e.booked || 0) / (e.capacity || 50)) * 100);
+              const isSellingFast = percentBooked > 80;
 
-          return (
-            <div key={e._id} className="card event-card">
-              <Countdown targetDate={e.date} />
-              
-              <h3>{e.title}</h3>
-              <div className="date"><Calendar size={16} /> {e.date}</div>
-              <div className="location"><MapPin size={16} /> {e.location}</div>
-              <p style={{marginTop: '1rem', lineHeight: '1.5', color: '#cbd5e1'}}>{e.description}</p>
-              
-              <div className="scarcity-container" style={{marginTop: '1.5rem'}}>
-                <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.5rem', color: isSellingFast ? '#ec4899' : '#94a3b8'}}>
-                  <span>{isSellingFast ? <><Flame size={14} style={{display:'inline', marginBottom:'-2px'}}/> Selling Fast!</> : 'Availability'}</span>
-                  <span>{available} tickets left</span>
-                </div>
-                <div className="progress-bar-bg">
-                  <div className="progress-bar-fill" style={{width: `${percentBooked}%`, background: isSellingFast ? 'linear-gradient(90deg, #f43f5e, #ec4899)' : 'linear-gradient(90deg, var(--secondary-color), var(--primary-color))'}}></div>
-                </div>
-              </div>
+              return (
+                <Tilt key={e._id} tiltMaxAngleX={10} tiltMaxAngleY={10} scale={1.03} transitionSpeed={2000} className="parallax-effect">
+                  <div className="card event-card" style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
+                    <Countdown targetDate={e.date} />
+                    
+                    <h3>{e.title}</h3>
+                    <div className="date"><Calendar size={16} /> {e.date}</div>
+                    <div className="location"><MapPin size={16} /> {e.location}</div>
+                    <p style={{marginTop: '1rem', lineHeight: '1.5', color: '#cbd5e1', flexGrow: 1}}>{e.description}</p>
+                    
+                    <div className="scarcity-container" style={{marginTop: '1.5rem'}}>
+                      <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.5rem', color: isSellingFast ? '#ec4899' : '#94a3b8'}}>
+                        <span>{isSellingFast ? <><Flame size={14} style={{display:'inline', marginBottom:'-2px'}}/> Selling Fast!</> : 'Availability'}</span>
+                        <span>{available} tickets left</span>
+                      </div>
+                      <div className="progress-bar-bg">
+                        <div className="progress-bar-fill" style={{width: `${percentBooked}%`, background: isSellingFast ? 'linear-gradient(90deg, #f43f5e, #ec4899)' : 'linear-gradient(90deg, var(--secondary-color), var(--primary-color))'}}></div>
+                      </div>
+                    </div>
 
-              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem'}}>
-                <span className="price">${e.price}</span>
-                <button className="btn" onClick={() => handleBook(e._id)} disabled={available <= 0} style={{opacity: available <= 0 ? 0.5 : 1}}>
-                  <Ticket size={16} style={{display:'inline', marginBottom:'-2px', marginRight: '6px'}}/> 
-                  {available > 0 ? 'Book Now' : 'Sold Out'}
-                </button>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem'}}>
+                      <span className="price">${e.price}</span>
+                      <button className="btn" onClick={() => handleBook(e._id)} disabled={available <= 0} style={{opacity: available <= 0 ? 0.5 : 1}}>
+                        <Ticket size={16} style={{display:'inline', marginBottom:'-2px', marginRight: '6px'}}/> 
+                        {available > 0 ? 'Book Now' : 'Sold Out'}
+                      </button>
+                    </div>
+                  </div>
+                </Tilt>
+              );
+            })}
+            {filtered.length === 0 && (
+              <div className="card" style={{gridColumn: '1 / -1', textAlign: 'center'}}>
+                <h3 style={{marginBottom: 0}}>No events found</h3>
+                <p style={{color: '#94a3b8', marginTop: '0.5rem'}}>Check back later or adjust your search.</p>
               </div>
-            </div>
-          );
-        })}
-        {filtered.length === 0 && (
-          <div className="card" style={{gridColumn: '1 / -1', textAlign: 'center'}}>
-            <h3 style={{marginBottom: 0}}>No events found</h3>
-            <p style={{color: '#94a3b8', marginTop: '0.5rem'}}>Check back later or adjust your search.</p>
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -246,19 +272,30 @@ function Events() {
 
 function Dashboard() {
   const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const currentUserId = localStorage.getItem('userId');
   
   useEffect(() => {
     if (currentUserId) {
-      axios.get(`${API_URL}/bookings/${currentUserId}`)
-        .then(res => setBookings(res.data))
-        .catch(err => console.error(err));
+      setTimeout(() => {
+        axios.get(`${API_URL}/bookings/${currentUserId}`)
+          .then(res => {
+            setBookings(res.data);
+            setLoading(false);
+          })
+          .catch(err => {
+            console.error(err);
+            setLoading(false);
+          });
+      }, 600); // skeleton demo delay
+    } else {
+      setLoading(false);
     }
   }, [currentUserId]);
 
   if (!currentUserId) {
     return (
-      <div className="card" style={{textAlign:'center', padding: '4rem 2rem'}}>
+      <div className="card" style={{textAlign:'center', padding: '4rem 2rem', position: 'relative', zIndex: 10}}>
         <h2>Access Denied</h2>
         <p style={{color: '#94a3b8'}}>You must be logged in to view your tickets.</p>
         <Link to="/auth"><button className="btn" style={{marginTop:'1rem'}}>Login Now</button></Link>
@@ -267,29 +304,36 @@ function Dashboard() {
   }
 
   return (
-    <div>
+    <div style={{position: 'relative', zIndex: 10}}>
       <h2>My Digital Tickets</h2>
-      {bookings.length === 0 ? (
+      {loading ? (
+         <div className="events-grid">
+           <div className="skeleton-card"></div>
+           <div className="skeleton-card"></div>
+         </div>
+      ) : bookings.length === 0 ? (
         <div className="card">
           <p style={{color: '#94a3b8'}}>No tickets booked yet.</p>
         </div>
       ) : (
         <div className="events-grid">
           {bookings.map((b, i) => (
-            <div key={i} className="card ticket-card" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center'}}>
-              <h3 style={{fontSize: '1.2rem', marginBottom: '1rem'}}>{b.event?.title || 'Unknown Event'}</h3>
-              
-              <div className="qr-container" style={{background: 'white', padding: '0.5rem', borderRadius: '8px', marginBottom: '1.5rem'}}>
-                 <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=TICKET-${b._id}`} alt="QR Code" />
+            <Tilt key={i} tiltMaxAngleX={15} tiltMaxAngleY={15} scale={1.05} transitionSpeed={2000}>
+              <div className="card ticket-card" style={{height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center'}}>
+                <h3 style={{fontSize: '1.2rem', marginBottom: '1rem'}}>{b.event?.title || 'Unknown Event'}</h3>
+                
+                <div className="qr-container" style={{background: 'white', padding: '0.5rem', borderRadius: '8px', marginBottom: '1.5rem'}}>
+                   <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=TICKET-${b._id}`} alt="QR Code" />
+                </div>
+                
+                <div style={{width: '100%', borderTop: '1px dashed rgba(255,255,255,0.2)', paddingTop: '1rem', fontSize: '0.9rem', color: '#cbd5e1', flexGrow: 1}}>
+                  <p><strong>Date:</strong> {b.event?.date}</p>
+                  <p><strong>Location:</strong> {b.event?.location}</p>
+                  <p><strong>Qty:</strong> {b.tickets}</p>
+                  <p style={{marginTop: '0.5rem', fontSize: '0.7rem', color: '#4facfe'}}>ID: {b._id}</p>
+                </div>
               </div>
-              
-              <div style={{width: '100%', borderTop: '1px dashed rgba(255,255,255,0.2)', paddingTop: '1rem', fontSize: '0.9rem', color: '#cbd5e1'}}>
-                <p><strong>Date:</strong> {b.event?.date}</p>
-                <p><strong>Location:</strong> {b.event?.location}</p>
-                <p><strong>Qty:</strong> {b.tickets}</p>
-                <p style={{marginTop: '0.5rem', fontSize: '0.7rem', color: '#4facfe'}}>ID: {b._id}</p>
-              </div>
-            </div>
+            </Tilt>
           ))}
         </div>
       )}
@@ -310,12 +354,14 @@ function Admin() {
 
   if (userRole !== 'admin') {
     return (
-      <div className="card" style={{textAlign:'center', padding: '4rem 2rem', border: '1px solid #f43f5e'}}>
-        <Shield size={48} color="#f43f5e" style={{marginBottom: '1rem'}} />
-        <h2>Access Denied</h2>
-        <p style={{color: '#94a3b8'}}>Admin privileges required. Your IP has been logged.</p>
-        <Link to="/auth"><button className="btn" style={{marginTop:'1rem'}}>Login as Admin</button></Link>
-      </div>
+      <Tilt tiltMaxAngleX={10} tiltMaxAngleY={10} scale={1.02}>
+        <div className="card" style={{textAlign:'center', padding: '4rem 2rem', border: '1px solid #f43f5e', position: 'relative', zIndex: 10}}>
+          <Shield size={48} color="#f43f5e" style={{marginBottom: '1rem'}} />
+          <h2>Access Denied</h2>
+          <p style={{color: '#94a3b8'}}>Admin privileges required. Your IP has been logged.</p>
+          <Link to="/auth"><button className="btn" style={{marginTop:'1rem'}}>Login as Admin</button></Link>
+        </div>
+      </Tilt>
     );
   }
 
@@ -323,56 +369,85 @@ function Admin() {
     e.preventDefault();
     axios.post(`${API_URL}/events`, { adminId: currentUserId, title, date, description, location, price, capacity })
       .then(() => {
-        alert('Event added successfully!');
+        toast.success('Event published to live database!');
         setTitle(''); setDate(''); setDescription(''); setLocation(''); setPrice(''); setCapacity(50);
       })
-      .catch(err => alert(err.response?.data?.error || 'Failed to add event.'));
+      .catch(err => toast.error(err.response?.data?.error || 'Failed to add event.'));
   };
 
   return (
-    <div>
+    <div style={{position: 'relative', zIndex: 10}}>
       <h2>Admin Panel</h2>
-      <div className="card" style={{maxWidth: '600px', margin: '0 auto'}}>
-        <h3 style={{marginBottom: '1.5rem'}}>Create New Event</h3>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Event Title</label>
-            <input required placeholder="e.g., Cyber Security Summit" value={title} onChange={e=>setTitle(e.target.value)} />
-          </div>
-          <div className="form-group" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
-            <div>
-              <label>Date (Future date for countdown)</label>
-              <input required type="datetime-local" value={date} onChange={e=>setDate(e.target.value)} />
+      <Tilt tiltMaxAngleX={2} tiltMaxAngleY={2} scale={1.01} transitionSpeed={3000}>
+        <div className="card" style={{maxWidth: '600px', margin: '0 auto'}}>
+          <h3 style={{marginBottom: '1.5rem'}}>Create New Event</h3>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Event Title</label>
+              <input required placeholder="e.g., Cyber Security Summit" value={title} onChange={e=>setTitle(e.target.value)} />
             </div>
-            <div>
-              <label>Price ($)</label>
-              <input required type="number" placeholder="0" value={price} onChange={e=>setPrice(e.target.value)} />
+            <div className="form-group" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+              <div>
+                <label>Date (Future date for countdown)</label>
+                <input required type="datetime-local" value={date} onChange={e=>setDate(e.target.value)} />
+              </div>
+              <div>
+                <label>Price ($)</label>
+                <input required type="number" placeholder="0" value={price} onChange={e=>setPrice(e.target.value)} />
+              </div>
             </div>
-          </div>
-          <div className="form-group" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
-            <div>
-              <label>Location</label>
-              <input required placeholder="e.g., Neo Tokyo / Online" value={location} onChange={e=>setLocation(e.target.value)} />
+            <div className="form-group" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+              <div>
+                <label>Location</label>
+                <input required placeholder="e.g., Neo Tokyo / Online" value={location} onChange={e=>setLocation(e.target.value)} />
+              </div>
+              <div>
+                <label>Ticket Capacity</label>
+                <input required type="number" placeholder="50" value={capacity} onChange={e=>setCapacity(e.target.value)} />
+              </div>
             </div>
-            <div>
-              <label>Ticket Capacity</label>
-              <input required type="number" placeholder="50" value={capacity} onChange={e=>setCapacity(e.target.value)} />
+            <div className="form-group">
+              <label>Description</label>
+              <textarea required placeholder="Detailed description of the event..." value={description} onChange={e=>setDescription(e.target.value)} rows={4} />
             </div>
-          </div>
-          <div className="form-group">
-            <label>Description</label>
-            <textarea required placeholder="Detailed description of the event..." value={description} onChange={e=>setDescription(e.target.value)} rows={4} />
-          </div>
-          <button type="submit" className="btn" style={{width: '100%', marginTop: '1rem'}}>+ Publish Event</button>
-        </form>
-      </div>
+            <button type="submit" className="btn" style={{width: '100%', marginTop: '1rem'}}>+ Publish Event</button>
+          </form>
+        </div>
+      </Tilt>
     </div>
   );
 }
 
 function App() {
+  const particlesInit = useCallback(async engine => {
+    await loadFull(engine);
+  }, []);
+
   return (
     <Router>
+      <Toaster position="bottom-right" toastOptions={{ style: { background: '#1e293b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } }} />
+      
+      {/* Background Particles */}
+      <Particles
+        id="tsparticles"
+        init={particlesInit}
+        options={{
+          background: { color: { value: "transparent" } },
+          fpsLimit: 60,
+          particles: {
+            color: { value: "#4facfe" },
+            links: { color: "#4facfe", distance: 150, enable: true, opacity: 0.2, width: 1 },
+            move: { enable: true, speed: 0.5, direction: "none", random: false, straight: false, outModes: { default: "out" } },
+            number: { density: { enable: true, area: 800 }, value: 40 },
+            opacity: { value: 0.3 },
+            shape: { type: "circle" },
+            size: { value: { min: 1, max: 3 } },
+          },
+          detectRetina: true,
+        }}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: -1 }}
+      />
+      
       <Navbar />
       <div className="container">
         <Routes>
